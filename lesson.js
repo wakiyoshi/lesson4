@@ -1,3 +1,8 @@
+const startButton = document.getElementById('start');
+startButton.addEventListener('click', ()=>{
+  fetchQuizData(1);
+  document.getElementById("start").style.display = "none";
+});
 
 const fetchQuizData = async (index) => {
   
@@ -8,18 +13,9 @@ const fetchQuizData = async (index) => {
   const response = await fetch("https://opentdb.com/api.php?amount=10");
   const quizData = await response.json();
   const quiz = new Quiz(quizData);
-  console.log(quizData);
-  const setNextQuiz = (quiz, index) => {
-    while (answersArea.firstChild) {
-      answersArea.removeChild(answersArea.firstChild);
-    }
-    if (index <= quiz.getNumQuizzes()) {
-      makeQuiz(quiz, index);
-    } else {
-      finishQuiz(quiz);
-    }
-  }
   
+  console.log(quizData);
+    //問題文の表示
   title.innerText = `問題${index}`;
 
   const genre = document.getElementById('genre');
@@ -34,6 +30,7 @@ const fetchQuizData = async (index) => {
   const correctAnswers = quiz.getQuizCorrectAnswer(1);
   const incorrectAnswers = quiz.getQuizIncorrectAnswer(1);
 
+  //問題のシャッフル
   const shuffle = ([...array]) => {
     for (let i = array.length - 1; i >= 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -44,46 +41,36 @@ const fetchQuizData = async (index) => {
   
   for(let i = 0; i < 10; i++){
   console.log(shuffle(...correctAnswers,...incorrectAnswers));}
-const answers = document.getElementById('answers');
-// answers.innerHTML = ''
-  const button = document.createElement('button');
-  const br = document.createElement('br');
-  
-  button.innerText = ` ${quiz.getQuizCorrectAnswer(1)}`;
-  answers.appendChild(button);
-  answers.appendChild(br);
-
-
-  
+//問題をクリックした時の正誤判定
   button.addEventListener('click', ()=>{
     quiz.countCorrectAnswers(index);
       index++;
 
     setNextQuiz(quiz,index);
-    // console.log(quiz.correctNum(1))
-    // quiz._correctAnswersNum += 1
-    // fetchQuizData();
-  })
-
-
-  quiz.getQuizIncorrectAnswer(1).forEach((a)=>{
-    const button = document.createElement('button');
-    const br = document.createElement('br');
-    button.innerText = a;
-
-    answers.appendChild(button);
-    answers.appendChild(br);
-    button.addEventListener('click', ()=>{
-    
-    })
 
   })
+//問題終了か、問題続行かの条件分岐
+  const answersArea = document.getElementById('answers');
+  const setNextQuiz = (quiz, index) => {
+    while (answersArea.firstChild) {
+      answersArea.removeChild(answersArea.firstChild);
+    }
+    if (index <= quiz.getNumQuizzes()) {
+      makeQuiz(quiz, index);
+    } else {
+      finishQuiz(quiz);
+    }
+  }
+   
+  //次の問題を表示
+  const makeQuiz =  (quiz,index) => {
+    fetchQuizData(quiz,index)
+    }
+//問題を終了して正解数を表示
+    const finishQuiz = (quiz) =>{
+      
+    }
 }
-const startButton = document.getElementById('start');
-startButton.addEventListener('click', ()=>{
-  fetchQuizData(1);
-  document.getElementById("start").style.display = "none";
-});
 
 
 class Quiz {
@@ -92,11 +79,9 @@ class Quiz {
    this._correctAnswersNum = 0;  //正解数
  }
 
-
  getNumQuizzes(index) {
    return this._quizzes[index]
  }
-
  getQuizCategory(index) {
    return this._quizzes[index - 1].category;
  }
@@ -113,12 +98,15 @@ class Quiz {
   return this._quizzes[index - 1].incorrect_answers;//arrayを取得
  }
  countCorrectAnswers(index,answer){
-  return this.__quizzes;
- }
- getCorrectAnswersNum(index){
- return this.__correctAnswersNum+[index+1]
-
+  if(this._quizzes[index - 1].correct_answer  === answer){
+    this._correctAnswersNum++
+  }
+  
 }
+ getCorrectAnswersNum(){
+ return this.__correctAnswersNum
+ }
+
 
 }
 
