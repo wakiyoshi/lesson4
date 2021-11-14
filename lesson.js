@@ -9,7 +9,8 @@ const fetchQuizData = async (index) => {
   title.innerText = "取得中";
   
   questions.innerText = '少々お待ちください';
-
+  
+  try{
   const response = await fetch("https://opentdb.com/api.php?amount=10");
   const quizData = await response.json();
   const quiz = new Quiz(quizData);
@@ -17,7 +18,10 @@ const fetchQuizData = async (index) => {
   
   console.log(quizData);
   console.log(quiz.getCorrectAnswersNum)
-
+  }
+  catch(err){
+   console.log(err)
+  }
 }
 
   const setNextQuiz = (quiz, index) => {
