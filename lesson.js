@@ -1,90 +1,147 @@
+const startButton = document.getElementById('start');
+startButton.addEventListener('click', ()=>{
+  fetchQuizData(1);
+  document.getElementById("start").style.display = "none";
+});
 
-fetchQuizData = async (index) => {
+const fetchQuizData = async (index) => {
   
   title.innerText = "取得中";
   
   questions.innerText = '少々お待ちください';
-
+  
+  try{
   const response = await fetch("https://opentdb.com/api.php?amount=10");
   const quizData = await response.json();
   const quiz = new Quiz(quizData);
-  const genre = document.getElementById('genre');
-  console.log(quizData)
-  title.innerText = `問題${Object.keys(quiz)}`;
-genre.innerText = `【ジャンル】 ${quiz.getQuizCategory(1)}`;
-const difficulty = document.getElementById('difficulty');
-difficulty.innerText = `【難易度】 ${quiz.getQuizDifficulty(1)}`;
-const question = document.getElementById('questions');
-question.innerText = ` ${quiz.getQuizQuestion(1)}`;
-
-
-const answers = document.getElementById('answers');
-answers.innerHTML = ''
-  const button = document.createElement('button');
-  const br = document.createElement('br');
+  setNextQuiz(quiz, index);
   
-  button.innerText = ` ${quiz.getQuizCorrectAnswer(1)}`;
-  answers.appendChild(button);
-  answers.appendChild(br);
+  console.log(quizData);
+  console.log(quiz.getCorrectAnswersNum)
+  }
+  catch(err){
+   console.log(err)
+  }
+}
+
+  const setNextQuiz = (quiz, index) => {
+
+    const answersArea = document.getElementById('answers');
+
+    while (answersArea.firstChild) {
+      answersArea.removeChild(answersArea.firstChild);
+    }
+    if (index <= quiz.getNumQuizzes()) {
+      makeQuiz(quiz, index);
+    } else {
+      finishQuiz(quiz);
+    }
+  }
+  const makeQuiz =  (quiz,index) => {
+    const shuffleArray = ([...array]) => {
+      for (let i = array.length - 1; i >= 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+    const buildAnswers = () => {
+      const answers = [
+        quiz.getQuizCorrectAnswer(index),
+        ...quiz.getQuizIncorrectAnswers(index)
+      ];
+      return shuffleArray(answers);
+    }
+    buildAnswers();
   
-  button.addEventListener('click', ()=>{
+    const answersArea = document.getElementById('answers');
+    shuffleArray(buildAnswers()).forEach((a) => {
+      const button = document.createElement('button')
+      button.innerText = a;
+      const br = document.createElement('br');
+      answersArea.appendChild(button)
+      answersArea.appendChild(br)
+
+      button.addEventListener('click', answer =>{
+          answer = a;
+          quiz.countCorrectAnswers(index,answer);
+            index++;
+      console.log(quiz.getCorrectAnswersNum())
+          setNextQuiz(quiz,index);
+          
+      })
+    });
+    title.innerText = `問題${index}`;
     
-    console.log(quiz.correctNum(1))
-    quiz._correctAnswersNum += 1
-    fetchQuizData();
-  })
-  
-  quiz.getQuizIncorrectAnswer(1).forEach((a)=>{
-    const button = document.createElement('button');
-    const br = document.createElement('br');
-    button.innerText = a;
-
-    answers.appendChild(button);
-    answers.appendChild(br);
-    button.addEventListener('click', ()=>{
+    const genre = document.getElementById('genre');
+    genre.innerText = `【ジャンル】 ${quiz.getQuizCategory(index)}`;
+    genre.style.display = 'block'
     
-      console.log(quiz.correctNum(1))
-      quiz._incorrectAnswersNum += 1
-      fetchQuizData();
-    })
+    const difficulty = document.getElementById('difficulty');
+    difficulty.innerText = `【難易度】 ${quiz.getQuizDifficulty(index)}`;
+    difficulty.style.display = 'block'
 
-  })
-}
-class Quiz {
-  constructor(quizData) {
-   this._quizzes = quizData.results; //クイズデータ
-   this._correctAnswersNum = 0;  //正解数
-   this._incorrectAnswersNum = 0; //不正解数
- }
+    const question = document.getElementById('questions');
+    question.innerText = ` ${quiz.getQuizQuestion(index)}`;
+  }
+  const finishQuiz = (quiz) =>{
+    const answersArea = document.getElementById('answers');
+        
+        title.innerText = `あなたの正解数は${quiz.getCorrectAnswersNum()}です！！！`;
+    
+        const genre = document.getElementById('genre');
+        genre.style.display = 'none';
+        
+        const difficulty = document.getElementById('difficulty');
+        difficulty.style.display = 'none';
+      
+        const question = document.getElementById('questions');
+        question.innerText = `もう一度挑戦したい場合は以下をクリック！！`;
+        
+  
+        const restartButton = document.createElement('button');
+        restartButton.innerText = 'ホームへ戻る'
+        restartButton.addEventListener('click', ()=>{
+          document.getElementById("start").style.display = "block";
+          restartButton.hidden = 'true';
+          title.innerText = 'ようこそ'
+          question.innerText = `以下のボタンをクリック`;
+        });
+        answersArea.appendChild(restartButton);
+      }
+      
+      class Quiz {
+        constructor(quizData) {
+         this._quizzes = quizData.results; //クイズデータ
+         this._correctAnswersNum = 0;  //正解数
+       }
 
-correctNum(){
-  return this._correctAnswersNum;
-}
-
- getQuizCategory(index) {
-   return this._quizzes[index - 1].category;
- }
- getQuizDifficulty(index){
-   return this._quizzes[index - 1].difficulty;
- }
- getQuizQuestion(index){
-  return this._quizzes[index - 1].question;
- }
- getQuizCorrectAnswer(index){
-  return this._quizzes[index - 1].correct_answer;
- }
- getQuizIncorrectAnswer(index){
-  return this._quizzes[index - 1].incorrect_answers;//arrayを取得
- }
-
-
-}
-const startButton = document.getElementById('start');
-startButton.addEventListener('click', ()=>{
-  fetchQuizData();
-  document.getElementById("start").style.display = "none";
-});
-
-
-
-
+       getQuizCategory(index) {
+         return this._quizzes[index - 1].category;
+       }
+       getQuizDifficulty(index){
+         return this._quizzes[index - 1].difficulty;
+       }
+       getQuizQuestion(index){
+        return this._quizzes[index - 1].question;
+       }
+       getQuizCorrectAnswer(index){
+        return this._quizzes[index - 1].correct_answer;
+       }
+       getQuizIncorrectAnswers(index){
+        return this._quizzes[index - 1].incorrect_answers;//arrayを取得
+       }
+       countCorrectAnswers(index,answer){
+        if(this._quizzes[index - 1].correct_answer  === answer
+          ){
+          this._correctAnswersNum++
+        }
+      }
+        getNumQuizzes() {
+          return this._quizzes.length;
+        }
+       
+       getCorrectAnswersNum(){
+       return this._correctAnswersNum;
+       }
+      }
